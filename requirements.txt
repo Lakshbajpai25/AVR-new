@@ -1,0 +1,12 @@
+Flask==3.1.0
+Werkzeug==3.1.3
+Flask-Login==0.6.3
+numpy==2.1.1
+opencv-python==4.11.0.86
+moviepy==2.1.2
+torch==2.6.0
+torchvision==0.21.0
+Pillow==10.4.0
+ultralytics==8.3.113
+imageio==2.37.0
+imageio-ffmpeg==0.6.0 

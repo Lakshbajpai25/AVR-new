@@ -1,0 +1,109 @@
+{% extends "admin_base.html" %}
+
+{% block admin_content %}
+<div class="main-content rounded-lg p-6">
+    <div class="flex justify-between items-center mb-6">
+        <h2 class="text-2xl font-semibold">System Settings</h2>
+        <button class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition duration-300">
+            Save Changes
+        </button>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="mb-4 p-4 rounded-lg {% if category == 'error' %}bg-red-600{% else %}bg-green-600{% endif %}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- General Settings -->
+        <div class="bg-gray-800 p-6 rounded-lg">
+            <h3 class="text-lg font-semibold mb-4">General Settings</h3>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-400 mb-2">Site Name</label>
+                    <input type="text" value="AVR Video Editor" class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-blue-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-400 mb-2">Admin Email</label>
+                    <input type="email" value="admin@avr.com" class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-blue-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-400 mb-2">Timezone</label>
+                    <select class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-blue-500">
+                        <option>UTC</option>
+                        <option>America/New_York</option>
+                        <option>Europe/London</option>
+                        <option>Asia/Tokyo</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Security Settings -->
+        <div class="bg-gray-800 p-6 rounded-lg">
+            <h3 class="text-lg font-semibold mb-4">Security Settings</h3>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-400 mb-2">Session Timeout (minutes)</label>
+                    <input type="number" value="30" class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-blue-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-400 mb-2">Maximum Login Attempts</label>
+                    <input type="number" value="5" class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-blue-500">
+                </div>
+                <div class="flex items-center">
+                    <input type="checkbox" id="2fa" class="mr-2">
+                    <label for="2fa" class="text-sm font-medium text-gray-400">Enable Two-Factor Authentication</label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Storage Settings -->
+        <div class="bg-gray-800 p-6 rounded-lg">
+            <h3 class="text-lg font-semibold mb-4">Storage Settings</h3>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-400 mb-2">Maximum Upload Size (MB)</label>
+                    <input type="number" value="500" class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-blue-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-400 mb-2">Storage Limit per User (GB)</label>
+                    <input type="number" value="10" class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-blue-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-400 mb-2">Allowed File Types</label>
+                    <input type="text" value=".mp4,.avi,.mov,.wmv" class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-blue-500">
+                </div>
+            </div>
+        </div>
+
+        <!-- Email Settings -->
+        <div class="bg-gray-800 p-6 rounded-lg">
+            <h3 class="text-lg font-semibold mb-4">Email Settings</h3>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-400 mb-2">SMTP Server</label>
+                    <input type="text" value="smtp.gmail.com" class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-blue-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-400 mb-2">SMTP Port</label>
+                    <input type="number" value="587" class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-blue-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-400 mb-2">Email Username</label>
+                    <input type="text" value="avr.videoeditor@gmail.com" class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-blue-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-400 mb-2">Email Password</label>
+                    <input type="password" value="••••••••" class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-blue-500">
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

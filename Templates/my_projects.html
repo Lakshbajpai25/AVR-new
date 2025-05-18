@@ -1,0 +1,185 @@
+{% extends "dashboard_base.html" %}
+
+{% block dashboard_content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="flex justify-between items-center mb-6">
+        <h2 class="text-2xl font-semibold">My Projects</h2>
+        <a href="{{ url_for('project') }}" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition duration-300">New Project</a>
+    </div>
+    
+    <div class="bg-gray-800 rounded-lg shadow-lg overflow-hidden">
+        {% if projects %}
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-700">
+                    <thead class="bg-gray-700">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Original File</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Processed File</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Created</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Status</th>
+                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-300 uppercase tracking-wider">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-700">
+                        {% for project in projects %}
+                        <tr class="hover:bg-gray-700 transition duration-150">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                {{ project.original_filename }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                {{ project.filename }}
+                                {% if project.processed_size %}
+                                <span class="text-xs text-gray-400">({{ project.processed_size }})</span>
+                                {% endif %}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
+                                {{ project.created_at }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                    {% if project.status == 'completed' %}
+                                        bg-green-100 text-green-800
+                                    {% elif project.status == 'failed' %}
+                                        bg-red-100 text-red-800
+                                    {% else %}
+                                        bg-yellow-100 text-yellow-800
+                                    {% endif %}">
+                                    {{ project.status }}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                <div class="flex items-center justify-end space-x-4">
+                                    {% if project.status == 'completed' %}
+                                    <a href="{{ url_for('download_file', filename=project.filename) }}" 
+                                       class="text-blue-400 hover:text-blue-300">
+                                       <i class="fas fa-download"></i> Download
+                                    </a>
+                                    {% endif %}
+                                    {% if project.status == 'failed' %}
+                                    <button 
+                                        onclick="retryProcessing({{ project.id }})"
+                                        class="text-yellow-400 hover:text-yellow-300">
+                                        <i class="fas fa-redo"></i> Retry
+                                    </button>
+                                    {% endif %}
+                                    <button 
+                                        onclick="toggleFavorite({{ project.id }})"
+                                        class="inline-flex items-center px-3 py-1 rounded bg-gray-700 hover:bg-gray-600">
+                                        <i class="fas {% if project.is_favorite %}fa-star text-yellow-400{% else %}fa-star text-gray-400{% endif %} mr-1"></i>
+                                        <span class="text-sm">{% if project.is_favorite %}Favorited{% else %}Add to Favorites{% endif %}</span>
+                                    </button>
+                                    <button 
+                                        onclick="deleteProject({{ project.id }})"
+                                        class="text-red-400 hover:text-red-300">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="p-8 text-center">
+                <p class="text-gray-400 text-lg mb-4">You haven't processed any videos yet.</p>
+                <a href="{{ url_for('project') }}" class="inline-block bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition duration-300">
+                    Start Your First Project
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+function deleteProject(projectId) {
+    if (confirm('Are you sure you want to delete this project?')) {
+        fetch(`/delete_project/${projectId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                window.location.reload();
+            } else {
+                alert(data.message || 'Error deleting project');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error deleting project');
+        });
+    }
+}
+
+function retryProcessing(projectId) {
+    if (confirm('Do you want to retry processing this video?')) {
+        fetch(`/reprocess/${projectId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                window.location.href = '/project';
+            } else {
+                alert(data.message || 'Error retrying project');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error retrying project');
+        });
+    }
+}
+
+function toggleFavorite(projectId) {
+    // Disable the button to prevent double-clicks
+    const button = event.currentTarget;
+    button.disabled = true;
+    
+    fetch('/toggle_favorite/' + projectId, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            // Update the button appearance without reloading
+            const icon = button.querySelector('i');
+            const text = button.querySelector('span');
+            if (icon.classList.contains('text-gray-400')) {
+                icon.classList.remove('text-gray-400');
+                icon.classList.add('text-yellow-400');
+                text.textContent = 'Favorited';
+            } else {
+                icon.classList.remove('text-yellow-400');
+                icon.classList.add('text-gray-400');
+                text.textContent = 'Add to Favorites';
+            }
+        } else {
+            alert('Failed to toggle favorite status');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error toggling favorite status. Please try again.');
+    })
+    .finally(() => {
+        button.disabled = false;
+    });
+}
+</script>
+{% endblock %} 

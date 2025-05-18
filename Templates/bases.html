@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}AVR{% endblock %}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="" />
+	<meta name="keywords" content="bootstrap, bootstrap5" />
+
+	<link rel="preconnect" href="https://fonts.gstatic.com">
+	<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Roboto:wght@300;400&display=swap" rel="stylesheet">
+
+
+	<link rel="stylesheet" href="static/fonts/icomoon/style.css">
+	<link rel="stylesheet" href="static/fonts/feather/style.css">
+
+	<link rel="stylesheet" href="static/css/tiny-slider.css">
+	<link rel="stylesheet" href="static/css/aos.css">
+	<link rel="stylesheet" href="static/css/glightbox.min.css">
+	<link rel="stylesheet" href="static/css/style.css">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+header{
+
+position: relative;
+background-size: cover;
+margin-top: 0px;
+padding: 25px;
+}
+
+
+
+    body {
+            min-height: 100vh;
+            background-image: url("/static/images/Untitled\ design\ black.jpg");
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
+    </style>
+    {% block styles %}{% endblock %}
+</head>
+<body>
+    <header>         
+        <div class="site-mobile-menu site-navbar-target">
+          <div class="site-mobile-menu-header">
+            <div class="site-mobile-menu-close">
+              <span class="icofont-close js-menu-toggle"></span>
+            </div>
+          </div>
+          <div class="site-mobile-menu-body"></div>
+        </div>
+      
+        <nav class="site-nav">
+          <div class="container">
+            <div class="site-navigation">
+             			  
+               
+                <ul class="js-clone-nav d-none d-lg-inline-block text-start site-menu float-end">
+                  <li class="active"><a href="{{url_for('index')}}">Home</a></li>
+                  <li class="has-children">
+                    <a href="#">Downloads</a>
+                    <ul class="dropdown">
+                      <li><a href="#">Get AVR</a></li>
+                      <li class="has-children">
+                        <a href="#">Versions</a>
+                        <ul class="dropdown">
+                          <li><a href="#">AVR 1.0</a></li>
+                          <li><a href="#">Comming Soon</a></li>
+                          <li><a href="#">Comming Soon</a></li>
+                        </ul>
+                      </li>
+                      <li><a href="#">Broucher</a></li>
+                    </ul>
+                  </li>
+                  <li><a href="{{url_for('about')}}">About</a></li>
+                  <li><a href="{{url_for('contactus')}}">Contact</a></li>
+                  <li><a class="py-2 px-3 inline-flex items-center gap-x-2 text-sm font-medium text-nowrap rounded-xl bg-gray-100 border border-gray-200 text-start hover:bg-gray-100 focus:outline-hidden focus:bg-gray-100 disabled:opacity-50 disabled:pointer-events-none dark:bg-neutral-900 dark:border-neutral-700 dark:hover:bg-gray-100/10 dark:text-white dark:hover:text-gray-400 dark:focus:text-gray-400"
+                      href="{{url_for('login')}}">
+                      Sign in
+                    </a>
+                </li>
+                  <li><a href="{{ url_for('index') }}#section2"
+                    class="py-2 px-3 inline-flex items-center gap-x-2 text-sm font-medium text-nowrap rounded-xl border border-transparent bg-lime-400 text-black hover:bg-lime-500 focus:outline-hidden focus:bg-lime-500 transition disabled:opacity-50 disabled:pointer-events-none" onclick="localStorage.setItem('scrollTrigger', 'true')">
+                    Sign up
+                    </a></li>
+                </ul>
+        
+              
+            </div>
+          </div>
+        </nav>
+      
+
+        
+           </div>
+        </header>  
+
+
+
+    <div class="container">
+        {% block content %}{% endblock %}
+    </div>
+</body>
+</html> 

@@ -1,0 +1,585 @@
+{% extends "dashboard_base.html" %}
+
+{% block dashboard_content %}
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        {% for category, message in messages %}
+            <div class="flash-message flash-{{ category }}">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+{% endwith %}
+            <div class="main-content rounded-lg p-6 max-w-3xl mx-auto">
+                <h1 class="text-3xl font-bold text-center mb-8">Transform Your Videos</h1>
+                <div class="mb-8">
+                    <div id="upload-zone" class="border-2 border-dashed border-gray-500 rounded-lg p-8 text-center cursor-pointer hover:border-blue-500 transition duration-300 bg-gray-800">
+                        <i class="fas fa-cloud-upload-alt text-4xl text-gray-400 mb-4"></i>
+                        <p class="text-gray-300">Drag and drop your video here or click to browse</p>
+                        <input type="file" id="video-input" class="hidden" accept="video/*">
+                    </div>
+                </div>
+                <div id="video-options" class="hidden mb-6">
+                    <h3 class="text-lg font-semibold mb-4">Reframe Options</h3>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-gray-300 text-sm font-bold mb-2">Aspect Ratio</label>
+                            <select id="aspect-ratio" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-900 text-white">
+                                <option value="16:9">16:9 (Landscape)</option>
+                                <option value="9:16">9:16 (Portrait)</option>
+                                <option value="1:1">1:1 (Square)</option>
+                                <option value="4:5">4:5 (Instagram)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-gray-300 text-sm font-bold mb-2">Subject Focus</label>
+                            <select id="subject-focus" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-900 text-white">
+                                <option value="no">No Subject Focus</option>
+                                <option value="auto">Auto Focus on Subject</option>
+                                <option value="manual">Manual Focus Selection</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div id="manual-focus-options" class="hidden mt-4">
+                        <h4 class="text-md font-semibold mb-2">Manual Focus Settings</h4>
+                        <div class="mb-4">
+                <div class="relative w-full" style="max-width: 100%; aspect-ratio: 16/9; background-color: #1a1a1a;">
+                                <video 
+                                    id="video-preview" 
+                                    class="w-full h-full object-contain rounded-lg" 
+                                    controls
+                        preload="auto"
+                        style="display: block; width: 100%; height: 100%;"
+                                >
+                                    Your browser does not support the video tag.
+                                </video>
+                                <svg id="mask-overlay" class="absolute top-0 left-0 w-full h-full pointer-events-none" style="z-index: 10;"></svg>
+                            </div>
+                            <p class="text-sm text-gray-400 mt-2">Click on the video to set focus point</p>
+                        </div>
+                        <div class="mb-4">
+                            <button id="detect-objects-btn" type="button" class="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition duration-300 cursor-pointer">
+                                <i class="fas fa-search mr-2"></i>
+                                Detect Objects
+                            </button>
+                        </div>
+                        <div id="detected-objects" class="hidden mb-4">
+                            <h5 class="text-sm font-semibold mb-2">Detected Subjects:</h5>
+                            <div id="objects-list" class="grid grid-cols-3 gap-4">
+                                <!-- Objects will be listed here -->
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-gray-300 text-sm font-bold mb-2">Focus X Position (%)</label>
+                                <input type="range" id="focus-x" min="0" max="100" value="50" class="w-full">
+                                <span id="focus-x-value" class="text-sm text-gray-400">50%</span>
+                            </div>
+                            <div>
+                                <label class="block text-gray-300 text-sm font-bold mb-2">Focus Y Position (%)</label>
+                                <input type="range" id="focus-y" min="0" max="100" value="50" class="w-full">
+                                <span id="focus-y-value" class="text-sm text-gray-400">50%</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="auto-focus-options" class="hidden mt-4">
+                        <label for="auto-focus-mode" class="block text-gray-300 text-sm font-bold mb-2">Auto Focus Mode</label>
+                        <select id="auto-focus-mode" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-900 text-white">
+                            <option value="single">Focus on single item (random)</option>
+                            <option value="multiple">Focus on multiple items</option>
+                        </select>
+                    </div>
+                </div>
+                <div id="progress-section" class="hidden my-6">
+                    <div class="w-full bg-gray-700 rounded-full h-4">
+                        <div id="progress-bar" class="bg-blue-500 h-4 rounded-full transition-all duration-300" style="width: 0%"></div>
+                    </div>
+                    <div class="text-center mt-2 text-sm text-gray-400">
+                        <span id="progress-text">Processing: 0%</span>
+            <span id="time-remaining" class="ml-2">-</span>
+                    </div>
+                </div>
+                <div id="download-section" class="hidden text-center">
+                    <a id="download-link" href="#" class="inline-flex items-center px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition duration-300">
+                        <i class="fas fa-download mr-2"></i>
+                        Download Processed Video
+                    </a>
+                    <div id="multi-download-links" class="mt-4 flex flex-col gap-2"></div>
+                </div>
+                <div class="text-center">
+                    <button id="process-btn" class="hidden px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition duration-300">
+                        Process Video
+                    </button>
+        </div>
+    </div>
+    <script>
+        // Full JavaScript logic from process.html
+        document.addEventListener('DOMContentLoaded', function() {
+            const uploadZone = document.getElementById('upload-zone');
+            const videoInput = document.getElementById('video-input');
+            const videoOptions = document.getElementById('video-options');
+            const processBtn = document.getElementById('process-btn');
+            const downloadSection = document.getElementById('download-section');
+            const downloadLink = document.getElementById('download-link');
+            const videoPreview = document.getElementById('video-preview');
+            const focusX = document.getElementById('focus-x');
+            const focusY = document.getElementById('focus-y');
+            const focusXValue = document.getElementById('focus-x-value');
+            const focusYValue = document.getElementById('focus-y-value');
+            const subjectFocus = document.getElementById('subject-focus');
+            const manualFocusOptions = document.getElementById('manual-focus-options');
+            const detectObjectsBtn = document.getElementById('detect-objects-btn');
+            const detectedObjects = document.getElementById('detected-objects');
+            const objectsList = document.getElementById('objects-list');
+            const autoFocusOptions = document.getElementById('auto-focus-options');
+
+            let currentFile = null;
+            let selectedSubject = null;
+
+            uploadZone.addEventListener('click', () => {
+                videoInput.click();
+            });
+
+            uploadZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                uploadZone.classList.add('border-blue-500');
+            });
+
+            uploadZone.addEventListener('dragleave', () => {
+                uploadZone.classList.remove('border-blue-500');
+            });
+
+            uploadZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadZone.classList.remove('border-blue-500');
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    handleFile(files[0]);
+                }
+            });
+
+            videoInput.addEventListener('change', (e) => {
+                if (e.target.files.length > 0) {
+                    handleFile(e.target.files[0]);
+                }
+            });
+
+            function handleFile(file) {
+                if (!file.type.startsWith('video/')) {
+                    alert('Please upload a video file');
+                    return;
+                }
+
+            // Clean up previous video URL
+            const videoPreview = document.getElementById('video-preview');
+            if (videoPreview && videoPreview.src) {
+                URL.revokeObjectURL(videoPreview.src);
+            }
+
+            // Create and set new video URL
+            const videoURL = URL.createObjectURL(file);
+            if (videoPreview) {
+                videoPreview.src = videoURL;
+                videoPreview.style.display = 'block';
+                videoPreview.load();
+            }
+
+            // Defensive checks for all elements
+            const processingSection = document.getElementById('processing-section');
+            if (processingSection) processingSection.classList.add('hidden');
+            const downloadSection = document.getElementById('download-section');
+            if (downloadSection) downloadSection.classList.add('hidden');
+            const progressBar = document.getElementById('progress-bar');
+            if (progressBar) progressBar.style.width = '0%';
+            const progressText = document.getElementById('progress-text');
+            if (progressText) progressText.textContent = 'Processing: 0%';
+            const timeRemaining = document.getElementById('time-remaining');
+            if (timeRemaining) timeRemaining.textContent = '-';
+            const aspectRatio = document.getElementById('aspect-ratio');
+            if (aspectRatio) aspectRatio.value = '16:9';
+            const subjectFocus = document.getElementById('subject-focus');
+            if (subjectFocus) subjectFocus.value = 'no';
+            const focusX = document.getElementById('focus-x');
+            if (focusX) focusX.value = '50';
+            const focusY = document.getElementById('focus-y');
+            if (focusY) focusY.value = '50';
+            const focusXValue = document.getElementById('focus-x-value');
+            if (focusXValue) focusXValue.textContent = '50%';
+            const focusYValue = document.getElementById('focus-y-value');
+            if (focusYValue) focusYValue.textContent = '50%';
+            const manualFocusOptions = document.getElementById('manual-focus-options');
+            if (manualFocusOptions) manualFocusOptions.classList.add('hidden');
+            const autoFocusOptions = document.getElementById('auto-focus-options');
+            if (autoFocusOptions) autoFocusOptions.classList.add('hidden');
+            const detectedObjects = document.getElementById('detected-objects');
+            if (detectedObjects) detectedObjects.classList.add('hidden');
+            const objectsList = document.getElementById('objects-list');
+            if (objectsList) objectsList.innerHTML = '';
+
+            // Upload the file
+            uploadFile(file);
+            }
+
+            videoPreview.addEventListener('click', function(e) {
+                if (subjectFocus.value === 'manual') {
+                    const rect = this.getBoundingClientRect();
+                    const x = ((e.clientX - rect.left) / rect.width) * 100;
+                    const y = ((e.clientY - rect.top) / rect.height) * 100;
+                    focusX.value = Math.min(100, Math.max(0, x));
+                    focusY.value = Math.min(100, Math.max(0, y));
+                    focusXValue.textContent = Math.round(x) + '%';
+                    focusYValue.textContent = Math.round(y) + '%';
+                    selectedSubject = {
+                        x: x,
+                        y: y,
+                        width: rect.width,
+                        height: rect.height
+                    };
+                }
+            });
+
+            focusX.addEventListener('input', function() {
+                focusXValue.textContent = this.value + '%';
+            });
+
+            focusY.addEventListener('input', function() {
+                focusYValue.textContent = this.value + '%';
+            });
+
+            subjectFocus.addEventListener('change', function() {
+                if (this.value === 'manual') {
+                    manualFocusOptions.classList.remove('hidden');
+                    autoFocusOptions.classList.add('hidden');
+                } else if (this.value === 'auto') {
+                    manualFocusOptions.classList.add('hidden');
+                    autoFocusOptions.classList.remove('hidden');
+                } else {
+                    manualFocusOptions.classList.add('hidden');
+                    autoFocusOptions.classList.add('hidden');
+                }
+            });
+
+            function uploadFile(file) {
+                const formData = new FormData();
+                formData.append('video', file);
+
+                fetch('/upload', {
+                    method: 'POST',
+                    body: formData
+                })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+                .then(data => {
+                    if (data.success) {
+                        currentFile = data.filename;
+                        videoOptions.classList.remove('hidden');
+                        processBtn.classList.remove('hidden');
+                    } else {
+                        alert(data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred during upload');
+                });
+            }
+
+        function formatTimeRemaining(seconds) {
+            if (seconds <= 0) return '-';
+            const minutes = Math.floor(seconds / 60);
+            const remainingSeconds = Math.floor(seconds % 60);
+            return `${minutes}m ${remainingSeconds}s`;
+        }
+
+            processBtn.addEventListener('click', () => {
+                if (!currentFile) return;
+                const aspectRatio = document.getElementById('aspect-ratio').value;
+                const subjectFocus = document.getElementById('subject-focus').value;
+                const focusXVal = document.getElementById('focus-x').value;
+                const focusYVal = document.getElementById('focus-y').value;
+                let autoFocusMode = null;
+                if (subjectFocus === 'auto') {
+                    const modeSelect = document.getElementById('auto-focus-mode');
+                    autoFocusMode = modeSelect.value;
+                }
+                videoOptions.classList.add('hidden');
+                processBtn.classList.add('hidden');
+                // Show progress bar
+                const progressSection = document.getElementById('progress-section');
+                const progressBar = document.getElementById('progress-bar');
+                const progressText = document.getElementById('progress-text');
+            const timeRemaining = document.getElementById('time-remaining');
+                progressSection.classList.remove('hidden');
+                progressBar.style.width = '0%';
+                progressText.textContent = 'Processing: 0%';
+            timeRemaining.textContent = `Time remaining: ${formatTimeRemaining(0)}`;
+                fetch('/process', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        filename: currentFile,
+                        aspect_ratio: aspectRatio,
+                        subject_focus: subjectFocus,
+                        focus_x: focusXVal,
+                        focus_y: focusYVal,
+                        auto_focus_mode: autoFocusMode,
+                        selected_subject: selectedSubject
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        downloadSection.classList.remove('hidden');
+                        if (data.processed_files && Array.isArray(data.processed_files)) {
+                            // Multiple files: show separate download links
+                            downloadLink.style.display = 'none';
+                            const multiLinks = document.getElementById('multi-download-links');
+                            multiLinks.innerHTML = '';
+                            data.processed_files.forEach(file => {
+                                const link = document.createElement('a');
+                                link.href = `/download/${file.filename}`;
+                                link.className = 'inline-flex items-center px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition duration-300';
+                                link.innerHTML = `<i class=\"fas fa-download mr-2\"></i>Download for <span class=\"font-bold\">${file.label}</span> (ID: ${file.id})`;
+                                multiLinks.appendChild(link);
+                            });
+                        } else {
+                            // Single file: show main download link
+                            downloadLink.style.display = '';
+                            downloadLink.href = `/download/${data.processed_filename}`;
+                            document.getElementById('multi-download-links').innerHTML = '';
+                        }
+                    } else {
+                        alert(data.message);
+                        videoOptions.classList.remove('hidden');
+                        processBtn.classList.remove('hidden');
+                    }
+                    progressSection.classList.add('hidden');
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred during processing');
+                    videoOptions.classList.remove('hidden');
+                    processBtn.classList.remove('hidden');
+                    progressSection.classList.add('hidden');
+                });
+                // Listen for progress updates
+                const evtSource = new EventSource(`/progress/${currentFile}`);
+                evtSource.onmessage = function(event) {
+                    const data = JSON.parse(event.data);
+                    progressBar.style.width = `${data.percentage}%`;
+                    progressText.textContent = `Processing: ${data.percentage}%`;
+                timeRemaining.textContent = `Time remaining: ${formatTimeRemaining(data.time_remaining)}`;
+                    if (data.percentage >= 100) {
+                        evtSource.close();
+                    }
+                };
+            });
+
+            // Attach Detect Objects button handler robustly
+            if (detectObjectsBtn) {
+                detectObjectsBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    if (!currentFile) {
+                        alert('Please upload a video first');
+                        return;
+                    }
+                    // Show loading state
+                    detectObjectsBtn.disabled = true;
+                    detectObjectsBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Detecting Objects...';
+                    // Get current frame from video
+                    const canvas = document.createElement('canvas');
+                    canvas.width = videoPreview.videoWidth;
+                    canvas.height = videoPreview.videoHeight;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(videoPreview, 0, 0, canvas.width, canvas.height);
+                    // Convert canvas to blob
+                    canvas.toBlob(function(blob) {
+                        if (!blob) {
+                            alert('Failed to capture video frame');
+                            return;
+                        }
+                        const formData = new FormData();
+                        formData.append('frame', blob, 'frame.jpg');
+                        // Send frame for object detection
+                        fetch('/detect-objects', {
+                            method: 'POST',
+                            body: formData
+                        })
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error('Network response was not ok');
+                            }
+                            return response.json();
+                        })
+                        .then(data => {
+                            if (data.error) {
+                                throw new Error(data.error);
+                            }
+                            if (data.objects && data.objects.length > 0) {
+                                displayDetectedObjects(data.objects);
+                            } else {
+                                alert('No objects detected in the current frame');
+                            }
+                        })
+                        .catch(error => {
+                            alert('An error occurred during object detection: ' + error.message);
+                        })
+                        .finally(() => {
+                            // Reset button state
+                            detectObjectsBtn.disabled = false;
+                            detectObjectsBtn.innerHTML = '<i class="fas fa-search mr-2"></i>Detect Objects';
+                        });
+                    }, 'image/jpeg');
+                });
+            } else {
+                alert('Detect Objects button not found in DOM!');
+            }
+
+            function displayDetectedObjects(objects) {
+                objectsList.innerHTML = '';
+                detectedObjects.classList.remove('hidden');
+                // SVG overlay for masks
+                const maskOverlay = document.getElementById('mask-overlay');
+                maskOverlay.innerHTML = '';
+                const videoWidth = videoPreview.videoWidth;
+                const videoHeight = videoPreview.videoHeight;
+                const displayWidth = videoPreview.clientWidth;
+                const displayHeight = videoPreview.clientHeight;
+                const scaleX = displayWidth / videoWidth;
+                const scaleY = displayHeight / videoHeight;
+                if (objects.length === 0) {
+                    objectsList.innerHTML = '<div class="text-gray-500 text-center">No objects detected</div>';
+                    return;
+                }
+                objects.forEach((obj, index) => {
+                    // Draw mask polygon if available
+                    if (obj.mask && Array.isArray(obj.mask)) {
+                        const points = obj.mask.map(pt => [pt[0] * scaleX, pt[1] * scaleY].join(",")).join(" ");
+                        const polygon = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
+                        polygon.setAttribute("points", points);
+                        polygon.setAttribute("fill", "rgba(255,0,0,0.2)");
+                        polygon.setAttribute("stroke", "red");
+                        polygon.setAttribute("stroke-width", "2");
+                        maskOverlay.appendChild(polygon);
+                        // Add label near the first point
+                        const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                        label.setAttribute("x", obj.mask[0][0] * scaleX + 4);
+                        label.setAttribute("y", obj.mask[0][1] * scaleY - 4);
+                        label.setAttribute("fill", "white");
+                        label.setAttribute("stroke", "black");
+                        label.setAttribute("stroke-width", "0.5");
+                        label.setAttribute("font-size", "16");
+                        label.setAttribute("font-family", "Arial, sans-serif");
+                        label.textContent = obj.label;
+                        maskOverlay.appendChild(label);
+                    }
+                    // Create object card in list
+                    const card = document.createElement('div');
+                    card.className = 'bg-gray-800 rounded-lg shadow-md p-3 cursor-pointer hover:bg-gray-700 transition-colors';
+                    card.dataset.index = index;
+                    const labelDiv = document.createElement('div');
+                    labelDiv.className = 'font-semibold text-sm mb-1 text-white';
+                    labelDiv.textContent = obj.label;
+                    const confidence = document.createElement('div');
+                    confidence.className = 'text-xs text-gray-300';
+                    confidence.textContent = `Confidence: ${(obj.confidence * 100).toFixed(1)}%`;
+                    card.appendChild(labelDiv);
+                    card.appendChild(confidence);
+                    // Add click handler
+                    card.addEventListener('click', () => {
+                        document.querySelectorAll('#objects-list .bg-gray-700').forEach(el => {
+                            el.classList.remove('bg-gray-700');
+                        });
+                        card.classList.add('bg-gray-600');
+                        // Store selected subject info
+                        selectedSubject = {
+                            label: obj.label,
+                            x1: obj.x1,
+                            y1: obj.y1,
+                            x2: obj.x2,
+                            y2: obj.y2,
+                            mask: obj.mask
+                        };
+                        // Update focus coordinates
+                        const centerX = (obj.x1 + obj.x2) / 2;
+                        const centerY = (obj.y1 + obj.y2) / 2;
+                        const rect = videoPreview.getBoundingClientRect();
+                        focusX.value = (centerX / rect.width) * 100;
+                        focusY.value = (centerY / rect.height) * 100;
+                        focusXValue.textContent = Math.round(focusX.value) + '%';
+                        focusYValue.textContent = Math.round(focusY.value) + '%';
+                    });
+                    objectsList.appendChild(card);
+                });
+            }
+        });
+
+    function processVideo() {
+        const filename = document.getElementById('video-filename').textContent;
+        const aspectRatio = document.getElementById('aspect-ratio').value;
+        const subjectFocus = document.getElementById('subject-focus').value;
+        const focusX = document.getElementById('focus-x').value;
+        const focusY = document.getElementById('focus-y').value;
+        const selectedSubject = document.getElementById('selected-subject').value;
+        const autoFocusMode = document.getElementById('auto-focus-mode').value;
+
+        // Show processing section
+        document.getElementById('processing-section').style.display = 'block';
+        document.getElementById('download-section').style.display = 'none';
+
+        // Start progress tracking
+        const progressBar = document.getElementById('progress-bar');
+        const progressText = document.getElementById('progress-text');
+        const progressEventSource = new EventSource(`/progress/${filename}`);
+
+        progressEventSource.onmessage = function(event) {
+            const data = JSON.parse(event.data);
+            const percentage = data.percentage;
+            progressBar.style.width = `${percentage}%`;
+            progressText.textContent = `${percentage}%`;
+            
+            if (percentage >= 100) {
+                progressEventSource.close();
+                // Show download section after processing
+                document.getElementById('download-section').style.display = 'block';
+            }
+        };
+
+        // Send processing request
+        fetch('/process', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                filename: filename,
+                aspect_ratio: aspectRatio,
+                subject_focus: subjectFocus,
+                focus_x: focusX,
+                focus_y: focusY,
+                selected_subject: selectedSubject,
+                auto_focus_mode: autoFocusMode
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Update download link
+                const downloadLink = document.getElementById('download-link');
+                downloadLink.href = `/download/${data.processed_filename}`;
+                downloadLink.textContent = `Download ${data.processed_filename}`;
+            } else {
+                alert(data.message || 'Error processing video');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error processing video');
+        });
+    }
+    </script>
+{% endblock %} 

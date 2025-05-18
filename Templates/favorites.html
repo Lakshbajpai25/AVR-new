@@ -1,0 +1,77 @@
+{% extends "dashboard_base.html" %}
+
+{% block dashboard_content %}
+<div class="main-content rounded-lg p-6">
+    <div class="flex justify-between items-center mb-6">
+        <h2 class="text-2xl font-semibold">Favorite Videos</h2>
+        <a href="{{ url_for('my_projects') }}" class="text-blue-400 hover:text-blue-300">
+            <i class="fas fa-arrow-left mr-2"></i>Back to All Projects
+        </a>
+    </div>
+
+    {% if favorite_videos %}
+    <div class="grid grid-cols-1 gap-6">
+        {% for video in favorite_videos %}
+        <div class="bg-gray-800 p-6 rounded-lg">
+            <div class="flex items-center justify-between">
+                <div class="flex-1">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-lg font-medium text-white">{{ video.original_filename }}</h3>
+                        <button onclick="toggleFavorite({{ video.id }})" class="text-yellow-400 hover:text-yellow-300">
+                            <i class="fas fa-star text-xl"></i>
+                        </button>
+                    </div>
+                    <p class="text-sm text-gray-400 mt-1">Added on {{ video.created_at }}</p>
+                    <div class="mt-4 flex items-center space-x-4">
+                        <span class="px-2 py-1 text-xs rounded-full 
+                            {% if video.status == 'completed' %}
+                                bg-green-100 text-green-800
+                            {% elif video.status == 'processing' %}
+                                bg-yellow-100 text-yellow-800
+                            {% else %}
+                                bg-red-100 text-red-800
+                            {% endif %}">
+                            {{ video.status }}
+                        </span>
+                        {% if video.status == 'completed' %}
+                        <a href="{{ url_for('download_file', filename=video.filename) }}" 
+                           class="text-sm text-blue-400 hover:text-blue-300 flex items-center">
+                            <i class="fas fa-download mr-1"></i> Download
+                        </a>
+                        <span class="text-sm text-gray-400">Size: {{ video.processed_size|filesizeformat }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="bg-gray-800 p-6 rounded-lg text-center">
+        <p class="text-gray-400 mb-4">You haven't marked any videos as favorites yet.</p>
+        <a href="{{ url_for('my_projects') }}" class="text-blue-400 hover:text-blue-300">
+            Go to My Projects to add some favorites
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+function toggleFavorite(projectId) {
+    fetch('/toggle_favorite/' + projectId, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Reload the page to reflect changes
+            window.location.reload();
+        }
+    })
+    .catch(error => console.error('Error:', error));
+}
+</script>
+{% endblock %} 
